@@ -149,7 +149,9 @@
 
 				// wait 1/2s and execute callback (cheap workaround to ensure everything is loaded)
 				if (obj.onload) {
-					timerId = setTimeout(obj.onload, 300);
+					setTimeout(obj.onload, 300);
+					clearTimeout(timerId);
+					tmxCount = 0;
 				} else
 					alert("no load callback defined");
 			} else {

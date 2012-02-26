@@ -606,12 +606,15 @@
 			if (levels[levelId] == null) {
 				//console.log("loading "+ levelId);
 				levels[levelId] = new me.TMXTileMap(levelId, 0, 0);
+			} else {
+				//console.log("level %s already loaded", levelId);
+				return false;
 			}
-			//else console.log("level %s already loaded", levelId);
 
 			// call the callback if defined
 			if (callback)
 				callback();
+			return true;
 		};
 
 		/**
