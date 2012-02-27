@@ -615,6 +615,7 @@
 			// call the callback if defined
 			if (callback)
 				callback();
+
 			// true to say level has been added
 			return true;
 		};

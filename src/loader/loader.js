@@ -118,7 +118,7 @@
 		var imgList = [];
 		// contains all the xml loaded
 		var xmlList = {};
-		// contains all the xml loaded
+		// contains all the binary files loaded
 		var binList = {};
 		// flag to check loading status
 		var resourceCount = 0;
@@ -135,26 +135,13 @@
 		function checkLoadStatus() {
 			// remove tmxCount from the total resource to be loaded
 			// as we will after load each TMX into the level director
-			if (loadCount == (resourceCount - tmxCount)) {
-
-				// add all TMX level into the level Director
-				for ( var xmlObj in xmlList) {
-					if (xmlList[xmlObj].isTMX) {
-						// load the level into the levelDirector
-						if(me.levelDirector.addTMXLevel(xmlObj)){
-							//progress notification if level not loaded already
-							obj.onResourceLoaded();
-						}
-					}
-				}
+			if (loadCount == resourceCount) {
 
 				// wait 1/2s and execute callback (cheap workaround to ensure everything is loaded)
 				if (obj.onload) {
 					setTimeout(obj.onload, 300);
 					// clear timeout so we dont keep calling this function
 					clearTimeout(timerId);
-					// reset tmxcount to 0 so we can count when new ones come
-					tmxCount = 0;
 				} else
 					alert("no load callback defined");
 			} else {
@@ -189,7 +176,7 @@
 		 * preload XML files
 		 * @private
 		 */
-		function preloadXML(xmlData, isTMX, onload, onerror) {
+		function preloadXML(xmlData, isTMX, onload, onerror, preloading) {
 			var onloadCB = onload;
 			if ($.XMLHttpRequest) {
 				// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -210,16 +197,19 @@
 				xmlList[xmlData.name] = {};
 				xmlList[xmlData.name].xml = xmlhttp.responseText;
 				xmlList[xmlData.name].isTMX = isTMX;
+				if(isTMX){
+					// load the level into the levelDirector
+					me.levelDirector.addTMXLevel(xmlData.name, (preloading) ? onloadCB : false);
+				}
 				// callback
 				onloadCB();
 			};
-			// increase the resourceCount by 1
+			// increase the resourceCount by 1 if we are preloading
 			// allowing to add the loading of level in the 
 			// levelDirector as part of the loading progress
 			if (isTMX) {
-				// some context issue ? (why this?)
-				this.resourceCount += 1;
-				this.tmxCount += 1;
+				if(preloading) resourceCount++;
+				tmxCount++;
 			}
 			// send the request
 			xmlhttp.send();
@@ -348,7 +338,7 @@
 		obj.preload = function(res) {
 			// parse the resources
 			for ( var i = 0; i < res.length; i++) {
-				resourceCount += obj.load(res[i], obj.onResourceLoaded.bind(obj), obj.onLoadingError.bind(obj, res[i]));
+				resourceCount += obj.load(res[i], obj.onResourceLoaded.bind(obj), obj.onLoadingError.bind(obj, res[i]), true);
 			};
 			// check load status
 			checkLoadStatus();
@@ -366,18 +356,20 @@
 		 * @param {Object} resource
 		 * @param {Function} onload function to be called when the resource is loaded
 		 * @param {Function} onerror function to be called in case of error
+		 * @param {Boolean} if we are preloading here
 		 * @example
 		 * // load a image asset
 		 * me.loader.load({name: "avatar",  type:"image",  src: "data/avatar.png"}, this.onload.bind(this), this.onerror.bind(this));
 		 */
 
-		obj.load = function(res, onload, onerror) {
+		obj.load = function(res, onload, onerror, preloading) {
+			if(preloading !== true) preloading = false;
 			// fore lowercase for the resource name
 			res.name = res.name.toLowerCase();
 			// check ressource type
 			switch (res.type) {
 				case "binary":
-					// reuse the preloadImage fn
+					// reuse the preloadBinary fn
 					preloadBinary(res, onload, onerror);
 					return 1;
 
@@ -387,7 +379,7 @@
 					return 1;
 
 				case "tmx":
-					preloadXML(res, true, onload, onerror);
+					preloadXML(res, true, onload, onerror, preloading);
 					return 1;
 				
 				case "audio":
