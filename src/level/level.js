@@ -608,12 +608,14 @@
 				levels[levelId] = new me.TMXTileMap(levelId, 0, 0);
 			} else {
 				//console.log("level %s already loaded", levelId);
+				// return false if level is already loaded
 				return false;
 			}
 
 			// call the callback if defined
 			if (callback)
 				callback();
+			// true to say level has been added
 			return true;
 		};
 

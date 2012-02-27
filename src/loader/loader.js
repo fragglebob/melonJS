@@ -141,16 +141,19 @@
 				for ( var xmlObj in xmlList) {
 					if (xmlList[xmlObj].isTMX) {
 						// load the level into the levelDirector
-						me.levelDirector.addTMXLevel(xmlObj);
-						//progress notification
-						obj.onResourceLoaded();
+						if(me.levelDirector.addTMXLevel(xmlObj)){
+							//progress notification if level not loaded already
+							obj.onResourceLoaded();
+						}
 					}
 				}
 
 				// wait 1/2s and execute callback (cheap workaround to ensure everything is loaded)
 				if (obj.onload) {
 					setTimeout(obj.onload, 300);
+					// clear timeout so we dont keep calling this function
 					clearTimeout(timerId);
+					// reset tmxcount to 0 so we can count when new ones come
 					tmxCount = 0;
 				} else
 					alert("no load callback defined");
